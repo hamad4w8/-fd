@@ -251,32 +251,35 @@
     🗑️ مسح جميع الأسماء
 </button>
         <div class="error-message" id="errorMessage"></div>
-        
+        <button onclick="forceNewImposter()" style="background-color: #9c27b0; color: white; margin: 5px;">
+    🎲 اختيار جاسوس عشوائي جديد
+</button>
+
         <h3>👥 قائمة المشاركين:</h3>
         <ul id="playersList" class="player-list"></ul>
         
         <button id="startGameBtn" onclick="startGame()" disabled>🎮 ابدأ اللعبة</button>
     </div>
 
-    <!-- الصفحة الثانية: بداية اللعبة -->
-    <div id="page2" class="page">
-        <h1>🎯 الدور عليك يا <span id="currentPlayer" class="innocent"></span></h1>
-        <div class="instructions">
-            <p>سترى المكان السري أو ستكون أنت الجاسوس!</p>
-            <p>انقر على "التالي" لترى دورك</p>
-        </div>
-        <button onclick="nextPage()">👉 التالي</button>
+   <!-- الصفحة الثانية: بداية اللعبة -->
+<div id="page2" class="page">
+    <h1 id="turnMessage">🎯 الدور عليك يا <span id="currentPlayer" style="color: #0d47a1; font-size: 28px;"></span></h1>
+    <div class="instructions">
+        <p>سترى المكان السري أو ستكون أنت الجاسوس!</p>
+        <p>انقر على "التالي" لترى دورك</p>
     </div>
+    <button onclick="nextPage()">👉 التالي</button>
+</div>
 
-    <!-- الصفحة الثالثة: عرض المكان -->
-    <div id="page3" class="page">
-        <h1 id="locationMessage"></h1>
-        <div class="location-image" id="locationImage">
-            <div id="locationContent" class="location-text"></div>
-        </div>
-        <div id="playerStatus"></div>
-        <button onclick="nextTurn()">👉 التالي</button>
+   <!-- الصفحة الثالثة: عرض المكان -->
+<div id="page3" class="page">
+    <h1 id="locationMessage"></h1>
+    <div class="location-image" id="locationImage">
+        <div id="locationContent" class="location-text"></div>
     </div>
+    <div id="playerStatus" style="margin: 15px 0;"></div>
+    <button onclick="nextTurn()">👉 التالي</button>
+</div>
 
     <!-- الصفحة الرابعة: مرحلة الأسئلة -->
     <div id="page4" class="page">
@@ -323,6 +326,10 @@
             <tbody id="resultsBody"></tbody>
         </table>
         <button onclick="restartGame()">🔄 العب مرة أخرى</button>
+
+<button onclick="resetScoresOnly()" style="background-color: #ff9800; color: white; margin-top: 10px;">
+    🔄 مسح النقاط فقط
+</button>
     </div>
 
     <script>
@@ -441,10 +448,64 @@
         // تحميل الأسماء المحفوظة عند بدء الصفحة
 window.onload = function() {
     loadSavedPlayers();
+    loadSavedScores(); // تحميل النقاط
+    loadSavedVotes();  // تحميل الأصوات
 };
+
+// في نهاية دالة calculateResults() أضف:
+saveScoresToStorage();
+saveVotesToStorage();
+
+// حفظ النقاط في LocalStorage
+function saveScoresToStorage() {
+    localStorage.setItem('spyGameScores', JSON.stringify(scores));
+}
+
+// تحميل النقاط المحفوظة
+function loadSavedScores() {
+    const savedScores = localStorage.getItem('spyGameScores');
+    if (savedScores) {
+        scores = JSON.parse(savedScores);
+    }
+}
+
+// حفظ الأصوات
+function saveVotesToStorage() {
+    localStorage.setItem('spyGameVotes', JSON.stringify(votes));
+}
+
+// تحميل الأصوات
+function loadSavedVotes() {
+    const savedVotes = localStorage.getItem('spyGameVotes');
+    if (savedVotes) {
+        votes = JSON.parse(savedVotes);
+    }
+}
+
 // حفظ الأسماء في LocalStorage
 function savePlayersToStorage() {
     localStorage.setItem('spyGamePlayers', JSON.stringify(players));
+    // لا تحفظ imposterIndex هنا!
+}
+// التحقق من أن الجاسوس عشوائي
+function testRandomImposter() {
+    console.log("=== اختبار عشوائية الجاسوس ===");
+    let results = {};
+    players.forEach(player => results[player] = 0);
+    
+    // جرب 100 مرة
+    for (let i = 0; i < 100; i++) {
+        let randomIndex = Math.floor(Math.random() * players.length);
+        results[players[randomIndex]]++;
+    }
+    
+    console.log("نتائج الاختبار (100 مرة):", results);
+}
+
+// حفظ النقاط في LocalStorage  
+function saveScoresToStorage() {
+    localStorage.setItem('spyGameScores', JSON.stringify(scores));
+    // لا تحفظ imposterIndex هنا!
 }
 
 // تحميل الأسماء المحفوظة
@@ -493,7 +554,17 @@ function clearSavedPlayers() {
     savePlayersToStorage(); // حفظ الأسماء في الذاكرة
 }
         }
-        
+        // مسح النقاط فقط
+function resetScoresOnly() {
+    if (confirm('هل تريد مسح جميع النقاط؟ الأسماء ستبقى محفوظة.')) {
+        scores = {};
+        votes = {};
+        saveScoresToStorage();
+        saveVotesToStorage();
+        alert('تم مسح النقاط بنجاح');
+        displayResults(); // أعد عرض النتائج
+    }
+}
         // تحديث قائمة اللاعبين
        function updatePlayersList() {
     const list = document.getElementById('playersList');
@@ -516,85 +587,111 @@ function removePlayer(index) {
     document.getElementById
     }
         
-        // بدء اللعبة
-        function startGame() {
-            if (players.length < 3) {
-                alert('الحد الأدنى للمشاركين 3 أشخاص');
-                return;
-            }
-            
-            // تهيئة المتغيرات
-            currentPlayerIndex = 0;
-            currentVoterIndex = 0;
-            votes = {};
-            scores = {};
-            voteSelections = {};
-            gameState = 'playing';
-            imposterGuess = '';
-            
-            // تعيين نقاط أولية
-            players.forEach(player => {
-                scores[player] = 0;
-                votes[player] = 0;
-            });
-            
-            // اختيار مكان خاص عشوائي
-            specialLocation = locations[Math.floor(Math.random() * locations.length)];
-            
-            // اختيار جاسوس عشوائي
+       // بدء اللعبة
+function startGame() {
+    console.log("بدء لعبة جديدة..."); // للتأكد من التشغيل
+    
+    // تحقق إذا القائمة فارغة
+    if (players.length === 0) {
+        alert('الرجاء إضافة لاعبين أولاً');
+        showPage('page1');
+        return;
+    }
+    
+    if (players.length < 2) {
+        alert('أضف لاعبين على الأقل');
+        showPage('page1');
+        return;
+    }
+    
+    // إعادة تعيين متغيرات اللعبة
+    currentPlayerIndex = 0;
+    currentVoterIndex = 0;
+    gameState = 'playing';
+    imposterGuess = '';
+    voteSelections = {};
+    
+    // اختر مكان جديد عشوائي
+    specialLocation = locations[Math.floor(Math.random() * locations.length)];
+    console.log("المكان السري:", specialLocation);
+    
+    // اختر جاسوس عشوائي جديد تماماً
+    imposterIndex = Math.floor(Math.random() * players.length);
+    console.log("الجاسوس المختار:", players[imposterIndex], "مؤشر:", imposterIndex);
+    
+    // تأكد أن الجاسوس مختلف كل مرة
+    let previousImposter = localStorage.getItem('previousImposter');
+    if (previousImposter && players.length > 1) {
+        // حاول اختيار شخص مختلف عن المرة السابقة
+        let attempts = 0;
+        while (players[imposterIndex] === previousImposter && attempts < 10) {
             imposterIndex = Math.floor(Math.random() * players.length);
+            attempts++;
+            console.log("تغيير الجاسوس - المحاولة:", attempts, "الجاسوس الجديد:", players[imposterIndex]);
+        }
+    }
+    
+    // احفظ الجاسوس الحالي للمرة القادمة
+    localStorage.setItem('previousImposter', players[imposterIndex]);
+    
+    // ابدأ اللعبة
+    showPage('page2');
+    showPlayerTurn();
+}
+        
+       // الانتقال للصفحة التالية
+function nextPage() {
+    if (gameState === 'playing' && currentPlayerIndex < players.length) {
+        showPage('page3');
+        const player = players[currentPlayerIndex];
+        
+        if (currentPlayerIndex === imposterIndex) {
+            // إذا كان اللاعب هو الجاسوس
+            document.getElementById('locationMessage').innerHTML = 
+                `👤 يا <span style="color: #d32f2f; font-size: 28px; font-weight: bold;">${player}</span>`;
             
-            showPage('page2');
-            showPlayerTurn();
+            document.getElementById('locationContent').innerHTML = 
+                '<div class="imposter-text">🎭 أنت الجاسوس! 🕵️‍♂️</div>' +
+                '<div style="margin-top: 20px; color: #ff9800; font-size: 18px;">' +
+                '⚠️ لا تعرف المكان السري<br>' +
+                '⚠️ حاول اكتشافه من الآخرين<br>' +
+                '⚠️ لا تدعهم يكتشفونك!' +
+                '</div>';
+        } else {
+            // إذا كان اللاعب بريئاً
+            document.getElementById('locationMessage').innerHTML = 
+                `👤 يا <span style="color: #2e7d32; font-size: 28px; font-weight: bold;">${player}</span>`;
+            
+            document.getElementById('locationContent').innerHTML = 
+                '<div class="innocent-text">✅ أنت بريء</div>' +
+                '<div style="margin-top: 20px; font-size: 22px;">' +
+                '📍 المكان السري:<br>' +
+                `<div style="color: #2196f3; font-size: 28px; margin: 10px 0; font-weight: bold;">${specialLocation}</div>` +
+                '🔍 حاول اكتشاف الجاسوس!' +
+                '</div>';
         }
-        
+    }
+}
+
+
         // عرض دور اللاعب الحالي
-        function showPlayerTurn() {
-            const player = players[currentPlayerIndex];
-            document.getElementById('currentPlayer').textContent = player;
-        }
-        
-        // الانتقال للصفحة التالية
-        function nextPage() {
-            if (gameState === 'playing') {
-                showPage('page3');
-                const player = players[currentPlayerIndex];
-                
-                if (currentPlayerIndex === imposterIndex) {
-                    // إذا كان اللاعب هو الجاسوس
-                    document.getElementById('locationMessage').innerHTML = 
-                        '👤 يا <span class="imposter">' + player + '</span>';
-                    
-                    document.getElementById('locationContent').innerHTML = 
-                        '<div class="imposter-text">🎭 أنت الجاسوس! 🕵️‍♂️</div>' +
-                        '<div style="margin-top: 20px; color: #ff0; font-size: 18px;">' +
-                        '⚠️ لا تعرف المكان السري<br>' +
-                        '⚠️ حاول اكتشافه من الآخرين<br>' +
-                        '⚠️ لا تدعهم يكتشفونك!' +
-                        '</div>';
-                    
-                    document.getElementById('playerStatus').innerHTML = 
-                        '<div class="status-badge imposter-badge">🎭 الجاسوس</div>';
-                } else {
-                    // إذا كان اللاعب بريئاً
-                    document.getElementById('locationMessage').innerHTML = 
-                        '👤 يا <span class="innocent">' + player + '</span>';
-                    
-                    document.getElementById('locationContent').innerHTML = 
-                        '<div class="innocent-text">✅ أنت بريء</div>' +
-                        '<div style="margin-top: 20px; font-size: 22px;">' +
-                        '📍 المكان السري:<br>' +
-                        '<div style="color: #0ff; font-size: 28px; margin: 10px 0;">' + 
-                        specialLocation + '</div>' +
-                        '🔍 حاول اكتشاف الجاسوس!' +
-                        '</div>';
-                    
-                    document.getElementById('playerStatus').innerHTML = 
-                        '<div class="status-badge innocent-badge">✅ بريء</div>';
-                }
-            }
-        }
-        
+function showPlayerTurn() {
+    const player = players[currentPlayerIndex];
+    const currentPlayerElement = document.getElementById('currentPlayer');
+    
+    if (currentPlayerElement) {
+        currentPlayerElement.textContent = player;
+        currentPlayerElement.style.color = "#2196f3";
+        currentPlayerElement.style.fontWeight = "bold";
+        currentPlayerElement.style.fontSize = "28px";
+    }
+    
+    // تأكد من أن الرسالة كاملة
+    const turnMessage = document.getElementById('turnMessage');
+    if (turnMessage) {
+        turnMessage.innerHTML = `🎯 <span style="color: #2196f3">الدور عليك يا</span> <span style="color: #0d47a1; font-size: 28px; font-weight: bold;">${player}</span>`;
+    }
+}
         // الانتقال للاعب التالي
         function nextTurn() {
             currentPlayerIndex++;
@@ -618,8 +715,8 @@ function removePlayer(index) {
         // عرض خيارات التصويت
         function showVotingOptions() {
             const voter = players[currentVoterIndex];
-            document.getElementById('voteMessage').innerHTML = 
-                '🗳️ يا <span style="color: #0ff">' + voter + '</span> تصوت على من؟';
+           document.getElementById('voteMessage').innerHTML = 
+    `🗳️ يا <span style="color: #2196f3; font-size: 24px; font-weight: bold;">${voter}</span> تصوت على من؟`;
             
             const remaining = players.length - currentVoterIndex - 1;
             document.getElementById('remainingVotes').textContent = 
@@ -743,31 +840,37 @@ function removePlayer(index) {
             displayResults();
         }
         
-        // حساب النتائج
-        function calculateResults() {
-            // حساب الأصوات
-            Object.values(voteSelections).forEach(votedPlayer => {
-                votes[votedPlayer] = (votes[votedPlayer] || 0) + 1;
-            });
-            
-            // حساب النقاط
-            players.forEach(player => {
-                // الجاسوس
-                if (player === players[imposterIndex]) {
-                    // إذا خمن الجاسوس المكان الصحيح
-                    if (imposterGuess === specialLocation) {
-                        scores[player] += 100;
-                    }
-                } 
-                // اللاعبون البرئاء
-                else {
-                    // إذا صوتوا على الجاسوس
-                    if (voteSelections[player] === players[imposterIndex]) {
-                        scores[player] += 100;
-                    }
-                }
-            });
+        // حساب النقاط
+function calculateResults() {
+    // لا تعيد تعيين النقاط، استخدم القيمة الموجودة
+    if (Object.keys(scores).length === 0) {
+        // أول مرة فقط: أعط نقاط أولية
+        players.forEach(player => {
+            scores[player] = 0;
+        });
+    }
+    
+    // حساب الأصوات
+    Object.values(voteSelections).forEach(votedPlayer => {
+        votes[votedPlayer] = (votes[votedPlayer] || 0) + 1;
+    });
+    
+    // إضافة النقاط الجديدة للنقاط الحالية
+    players.forEach(player => {
+        // الجاسوس
+        if (player === players[imposterIndex]) {
+            if (imposterGuess === specialLocation) {
+                scores[player] += 100; // زد 100 على النقاط الموجودة
+            }
+        } 
+        // اللاعبون البرئاء
+        else {
+            if (voteSelections[player] === players[imposterIndex]) {
+                scores[player] += 100; // زد 100 على النقاط الموجودة
+            }
         }
+    });
+}
         
         // عرض النتائج
         function displayResults() {
@@ -825,13 +928,26 @@ function removePlayer(index) {
             });
         }
         
-        // إعادة تشغيل اللعبة
-        function restartGame() {
-            
-            updatePlayersList();
-            showPage('page1');
-            document.getElementById('startGameBtn').disabled = true;
-        }
+       // إعادة تشغيل اللعبة
+function restartGame() {
+    // فقط ارجع للصفحة الأولى
+    showPage('page1');
+    
+    // لازم نعاين وجود الأسماء أول
+    if (players.length === 0) {
+        // إذا مافيه أسماء، شغل زر الإضافة
+        document.getElementById('playerName').focus();
+        document.getElementById('startGameBtn').disabled = true;
+    } else {
+        // إذا فيه أسماء، فـعـل زر ابدأ اللعبة مباشرة
+        document.getElementById('startGameBtn').disabled = false;
+        
+        // واضح للاعب إنه يقدر يبدأ
+        setTimeout(() => {
+            alert('✅ الأسماء محفوظة! اضغط "ابدأ اللعبة" للعب مرة أخرى.');
+        }, 300);
+    }
+}
         
         // تبديل الصفحات
         function showPage(pageId) {
@@ -841,15 +957,20 @@ function removePlayer(index) {
             });
             document.getElementById(pageId).classList.add('active-page');
         }
-        // مسح جميع الأسماء
+        // مسح جميع الأسماء والنقاط
 function clearAllPlayers() {
-    if (confirm('هل تريد مسح جميع الأسماء؟')) {
+    if (confirm('هل تريد مسح جميع الأسماء والنقاط؟')) {
         players = [];
+        scores = {};
+        votes = {};
         updatePlayersList();
         document.getElementById('startGameBtn').disabled = true;
-        clearSavedPlayers(); // مسح من الذاكرة أيضاً
+        clearSavedPlayers();
+        saveScoresToStorage();
+        saveVotesToStorage();
     }
 }
+
     </script>
 </body>
 </html>
