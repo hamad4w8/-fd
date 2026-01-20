@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لعبة الجاسوس</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #000;
+            color: #0f0;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            transition: all 0.5s ease;
+        }
+
+        .page {
+            display: none;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 2px solid #0f0;
+            border-radius: 10px;
+            background-color: rgba(0, 30, 0, 0.8);
+            box-shadow: 0 0 20px #0f0;
+        }
+
+        .active-page {
+            display: block;
+        }
+
+        h1 {
+            color: #0f0;
+            text-shadow: 0 0 10px #0f0;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            color: #0f0;
+            margin-bottom: 20px;
+        }
+
+        input {
+            width: 80%;
+            padding: 12px;
+            margin: 10px 0;
+            background-color: #111;
+            color: #0f0;
+            border: 1px solid #0f0;
+            border-radius: 5px;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        input::placeholder {
+            color: #0a0;
+        }
+
+        button {
+            background-color: #000;
+            color: #0f0;
+            border: 2px solid #0f0;
+            padding: 12px 30px;
+            margin: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            min-width: 150px;
+        }
+
+        button:hover {
+            background-color: #0f0;
+            color: #000;
+            box-shadow: 0 0 15px #0f0;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .player-list {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
+        }
+
+        .player-list li {
+            background-color: #111;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #0a0;
+            border-radius: 5px;
+            color: #0f0;
+        }
+
+        .location-image {
+            width: 300px;
+            height: 200px;
+            margin: 20px auto;
+            border: 3px solid #0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            background-color: #111;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 15px #0f0;
+            position: relative;
+        }
+
+        .location-image img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: cover;
+        }
+
+        .location-text {
+            color: #0f0;
+            font-size: 22px;
+            font-weight: bold;
+            text-shadow: 0 0 10px #0f0;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .imposter-text {
+            color: #f00;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 0 0 10px #f00;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .innocent-text {
+            color: #0f0;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 0 0 10px #0f0;
+        }
+
+        .error-message {
+            color: #f00;
+            background-color: rgba(255, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            display: none;
+        }
+
+        .vote-option {
+            background-color: #111;
+            padding: 15px;
+            margin: 10px 0;
+            border: 2px solid #0f0;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .vote-option:hover {
+            background-color: #0a0;
+            transform: scale(1.02);
+        }
+
+        .results-table {
+            width: 100%;
+            margin: 20px 0;
+            border-collapse: collapse;
+        }
+
+        .results-table th, .results-table td {
+            padding: 12px;
+            border: 1px solid #0f0;
+            text-align: center;
+        }
+
+        .results-table th {
+            background-color: #0a0;
+            color: #000;
+        }
+
+        .imposter {
+            color: #f00;
+            font-weight: bold;
+            text-shadow: 0 0 10px #f00;
+            animation: pulse 2s infinite;
+        }
+
+        .innocent {
+            color: #0f0;
+            font-weight: bold;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin-left: 10px;
+            font-size: 12px;
+        }
+
+        .imposter-badge {
+            background-color: rgba(255, 0, 0, 0.2);
+            color: #f00;
+        }
+
+        .innocent-badge {
+            background-color: rgba(0, 255, 0, 0.2);
+            color: #0f0;
+        }
+
+        .instructions {
+            background-color: rgba(0, 30, 0, 0.5);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 1px solid #0a0;
+        }
+
+        .instructions h3 {
+            color: #0f0;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- الصفحة الأولى: إدخال الأسماء -->
+    <div id="page1" class="page active-page">
+        <h1>🚀 مرحباً بلعبة الجاسوس 🕵️‍♂️</h1>
+        <div class="instructions">
+            <h3>📋 طريقة اللعب:</h3>
+            <p>• أدخل أسماء جميع المشاركين</p>
+            <p>• الحد الأدنى: 3 لاعبين</p>
+            <p>• سيتم اختيار جاسوس واحد عشوائياً</p>
+            <p>• الجاسوس لا يعرف المكان السري!</p>
+        </div>
+        <input type="text" id="playerName" placeholder="اكتب اسم اللاعب">
+        <button onclick="addPlayer()">➕ إضافة للقائمة</button>
+        <!-- أضف هذا الزر في الصفحة الأولى بعد زر ابدأ اللعبة -->
+<button onclick="clearAllPlayers()" style="background-color: #300; color: #f00;">
+    🗑️ مسح جميع الأسماء
+</button>
+        <div class="error-message" id="errorMessage"></div>
+        
+        <h3>👥 قائمة المشاركين:</h3>
+        <ul id="playersList" class="player-list"></ul>
+        
+        <button id="startGameBtn" onclick="startGame()" disabled>🎮 ابدأ اللعبة</button>
+    </div>
+
+    <!-- الصفحة الثانية: بداية اللعبة -->
+    <div id="page2" class="page">
+        <h1>🎯 الدور عليك يا <span id="currentPlayer" class="innocent"></span></h1>
+        <div class="instructions">
+            <p>سترى المكان السري أو ستكون أنت الجاسوس!</p>
+            <p>انقر على "التالي" لترى دورك</p>
+        </div>
+        <button onclick="nextPage()">👉 التالي</button>
+    </div>
+
+    <!-- الصفحة الثالثة: عرض المكان -->
+    <div id="page3" class="page">
+        <h1 id="locationMessage"></h1>
+        <div class="location-image" id="locationImage">
+            <div id="locationContent" class="location-text"></div>
+        </div>
+        <div id="playerStatus"></div>
+        <button onclick="nextTurn()">👉 التالي</button>
+    </div>
+
+    <!-- الصفحة الرابعة: مرحلة الأسئلة -->
+    <div id="page4" class="page">
+        <h1>🤔 اسألوا بعض</h1>
+        <div class="instructions">
+            <p>• اسألوا بعض الأسئلة عن المكان</p>
+            <p>• حاولوا اكتشاف الجاسوس</p>
+            <p>• الجاسوس يحاول التخفي</p>
+            <p>• عند الانتهاء، انقر على "التالي"</p>
+        </div>
+        <button onclick="startVotingPhase()">👉 التالي للتصويت</button>
+    </div>
+
+    <!-- الصفحة الخامسة: التصويت -->
+    <div id="page5" class="page">
+        <h1 id="voteMessage"></h1>
+        <div class="instructions">
+            <p>اختر من تعتقد أنه الجاسوس</p>
+            <p id="remainingVotes"></p>
+        </div>
+        <div id="voteOptions"></div>
+        <div id="selectedVote" style="margin: 20px; color: #0f0; font-size: 18px;"></div>
+    </div>
+
+    <!-- الصفحة السادسة: النتائج -->
+    <div id="page6" class="page">
+        <h1>🏆 النتائج النهائية</h1>
+        <h2 id="imposterResult" class="imposter"></h2>
+        
+        <div class="instructions">
+            <h3>📊 نقاط التصويت</h3>
+            <p>• من صوت على الجاسوس: +100 نقطة</p>
+            <p>• الجاسوس خمن المكان الصحيح: +100 نقطة</p>
+        </div>
+        
+        <table class="results-table" id="resultsTable">
+            <thead>
+                <tr>
+                    <th>👤 اللاعب</th>
+                    <th>🏅 النقاط</th>
+                    <th>📝 التفاصيل</th>
+                </tr>
+            </thead>
+            <tbody id="resultsBody"></tbody>
+        </table>
+        <button onclick="restartGame()">🔄 العب مرة أخرى</button>
+    </div>
+
+    <script>
+        // المتغيرات العامة للعبة
+        let players = [];
+        let currentPlayerIndex = 0;
+        let currentVoterIndex = 0;
+        let votes = {};
+        let scores = {};
+        let locations = [
+            '🏢 مطار',
+            '🏥 مستشفى', 
+            '🏫 مدرسة',
+            '🏨 فندق',
+            '🍽️ مطعم',
+            '🛒 سوبرماركت',
+            '🌳 حديقة',
+            '🎪 ساحة',
+            '📚 مكتبة',
+            '🏛️ متحف',
+            '🎭 مسرح',
+            '🏪 كافيه',
+            '⚽ ملعب',
+            '🏖️ شاطئ',
+            '🎮 مركز ألعاب'
+        ];
+        let specialLocation = '';
+        let imposterIndex = -1;
+        let gameState = 'playing';
+        let voteSelections = {};
+        let imposterGuess = '';
+
+        // تحميل الأسماء المحفوظة عند بدء الصفحة
+window.onload = function() {
+    loadSavedPlayers();
+};
+// حفظ الأسماء في LocalStorage
+function savePlayersToStorage() {
+    localStorage.setItem('spyGamePlayers', JSON.stringify(players));
+}
+
+// تحميل الأسماء المحفوظة
+function loadSavedPlayers() {
+    const savedPlayers = localStorage.getItem('spyGamePlayers');
+    if (savedPlayers) {
+        players = JSON.parse(savedPlayers);
+        updatePlayersList();
+        document.getElementById('startGameBtn').disabled = players.length < 3;
+    }
+}
+
+// مسح الأسماء المحفوظة
+function clearSavedPlayers() {
+    localStorage.removeItem('spyGamePlayers');
+}
+        
+        // إضافة لاعب جديد
+        function addPlayer() {
+            const input = document.getElementById('playerName');
+            const name = input.value.trim();
+            const error = document.getElementById('errorMessage');
+            
+            if (name === '') {
+                error.textContent = '⚠️ الرجاء إدخال اسم';
+                error.style.display = 'block';
+                return;
+            }
+            
+            if (players.includes(name)) {
+                error.textContent = '⚠️ هذا الاسم موجود مسبقاً';
+                error.style.display = 'block';
+                return;
+            }
+            
+            players.push(name);
+            input.value = '';
+            error.style.display = 'none';
+            updatePlayersList();
+            
+            document.getElementById('startGameBtn').disabled = players.length < 3;
+            function addPlayer() {
+    // الكود الحالي...
+    
+    // أضف هذا السطر في نهاية الدالة:
+    savePlayersToStorage(); // حفظ الأسماء في الذاكرة
+}
+        }
+        
+        // تحديث قائمة اللاعبين
+       function updatePlayersList() {
+    const list = document.getElementById('playersList');
+    list.innerHTML = '';
+    players.forEach((player, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+            <span>👤 ${player}</span>
+            <button class="remove-player" onclick="removePlayer(${index})">×</button>
+        `;
+        list.appendChild(li);
+    });
+}
+
+// دالة إزالة لاعب محدد
+function removePlayer(index) {
+    players.splice(index, 1);
+    updatePlayersList();
+    savePlayersToStorage(); // حفظ التغييرات
+    document.getElementById
+    }
+        
+        // بدء اللعبة
+        function startGame() {
+            if (players.length < 3) {
+                alert('الحد الأدنى للمشاركين 3 أشخاص');
+                return;
+            }
+            
+            // تهيئة المتغيرات
+            currentPlayerIndex = 0;
+            currentVoterIndex = 0;
+            votes = {};
+            scores = {};
+            voteSelections = {};
+            gameState = 'playing';
+            imposterGuess = '';
+            
+            // تعيين نقاط أولية
+            players.forEach(player => {
+                scores[player] = 0;
+                votes[player] = 0;
+            });
+            
+            // اختيار مكان خاص عشوائي
+            specialLocation = locations[Math.floor(Math.random() * locations.length)];
+            
+            // اختيار جاسوس عشوائي
+            imposterIndex = Math.floor(Math.random() * players.length);
+            
+            showPage('page2');
+            showPlayerTurn();
+        }
+        
+        // عرض دور اللاعب الحالي
+        function showPlayerTurn() {
+            const player = players[currentPlayerIndex];
+            document.getElementById('currentPlayer').textContent = player;
+        }
+        
+        // الانتقال للصفحة التالية
+        function nextPage() {
+            if (gameState === 'playing') {
+                showPage('page3');
+                const player = players[currentPlayerIndex];
+                
+                if (currentPlayerIndex === imposterIndex) {
+                    // إذا كان اللاعب هو الجاسوس
+                    document.getElementById('locationMessage').innerHTML = 
+                        '👤 يا <span class="imposter">' + player + '</span>';
+                    
+                    document.getElementById('locationContent').innerHTML = 
+                        '<div class="imposter-text">🎭 أنت الجاسوس! 🕵️‍♂️</div>' +
+                        '<div style="margin-top: 20px; color: #ff0; font-size: 18px;">' +
+                        '⚠️ لا تعرف المكان السري<br>' +
+                        '⚠️ حاول اكتشافه من الآخرين<br>' +
+                        '⚠️ لا تدعهم يكتشفونك!' +
+                        '</div>';
+                    
+                    document.getElementById('playerStatus').innerHTML = 
+                        '<div class="status-badge imposter-badge">🎭 الجاسوس</div>';
+                } else {
+                    // إذا كان اللاعب بريئاً
+                    document.getElementById('locationMessage').innerHTML = 
+                        '👤 يا <span class="innocent">' + player + '</span>';
+                    
+                    document.getElementById('locationContent').innerHTML = 
+                        '<div class="innocent-text">✅ أنت بريء</div>' +
+                        '<div style="margin-top: 20px; font-size: 22px;">' +
+                        '📍 المكان السري:<br>' +
+                        '<div style="color: #0ff; font-size: 28px; margin: 10px 0;">' + 
+                        specialLocation + '</div>' +
+                        '🔍 حاول اكتشاف الجاسوس!' +
+                        '</div>';
+                    
+                    document.getElementById('playerStatus').innerHTML = 
+                        '<div class="status-badge innocent-badge">✅ بريء</div>';
+                }
+            }
+        }
+        
+        // الانتقال للاعب التالي
+        function nextTurn() {
+            currentPlayerIndex++;
+            
+            if (currentPlayerIndex < players.length) {
+                showPage('page2');
+                showPlayerTurn();
+            } else {
+                // مرحلة الأسئلة
+                showPage('page4');
+            }
+        }
+        
+        // بدء مرحلة التصويت
+        function startVotingPhase() {
+            currentVoterIndex = 0;
+            showPage('page5');
+            showVotingOptions();
+        }
+        
+        // عرض خيارات التصويت
+        function showVotingOptions() {
+            const voter = players[currentVoterIndex];
+            document.getElementById('voteMessage').innerHTML = 
+                '🗳️ يا <span style="color: #0ff">' + voter + '</span> تصوت على من؟';
+            
+            const remaining = players.length - currentVoterIndex - 1;
+            document.getElementById('remainingVotes').textContent = 
+                'باقي ' + remaining + ' لاعبين للتصويت';
+            
+            const optionsContainer = document.getElementById('voteOptions');
+            optionsContainer.innerHTML = '';
+            
+            // إنشاء قائمة باللاعبين باستثناء المصوت الحالي
+            const availablePlayers = players.filter(player => player !== voter);
+            
+            // ترتيب عشوائي للقائمة
+            availablePlayers.sort(() => Math.random() - 0.5);
+            
+            // عرض خيارات التصويت
+            availablePlayers.forEach(player => {
+                const option = document.createElement('div');
+                option.className = 'vote-option';
+                option.innerHTML = '👤 ' + player;
+                option.onclick = () => selectVote(player, voter);
+                optionsContainer.appendChild(option);
+            });
+            
+            document.getElementById('selectedVote').textContent = '';
+        }
+        
+        // اختيار صوت
+        function selectVote(selectedPlayer, voter) {
+            voteSelections[voter] = selectedPlayer;
+            document.getElementById('selectedVote').innerHTML = 
+                '✅ اخترت: <span style="color: #0ff">' + selectedPlayer + '</span>';
+            
+            // إضافة زر للمتابعة
+            const continueBtn = document.createElement('button');
+            continueBtn.textContent = '👉 التالي';
+            continueBtn.onclick = nextVoter;
+            continueBtn.style.marginTop = '20px';
+            
+            const container = document.getElementById('voteOptions');
+            if (!container.querySelector('button')) {
+                container.appendChild(continueBtn);
+            }
+        }
+        
+        // الانتقال للمصوت التالي
+        function nextVoter() {
+            currentVoterIndex++;
+            
+            if (currentVoterIndex < players.length) {
+                showVotingOptions();
+            } else {
+                // سؤال الجاسوس عن المكان
+                askImposterAboutLocation();
+            }
+        }
+        
+        // سؤال الجاسوس عن تخمينه للمكان
+        function askImposterAboutLocation() {
+            const imposter = players[imposterIndex];
+            showPage('page5');
+            
+            document.getElementById('voteMessage').innerHTML = 
+                '🎭 يا <span class="imposter">' + imposter + '</span> (الجاسوس)<br>' +
+                'ما هو تخمينك للمكان السري؟';
+            
+            document.getElementById('remainingVotes').textContent = 'آخر خطوة قبل النتائج';
+            
+            const optionsContainer = document.getElementById('voteOptions');
+            optionsContainer.innerHTML = '';
+            
+            // عرض 5 أماكن عشوائية (بما فيها المكان الحقيقي)
+            let locationOptions = [specialLocation];
+            
+            // إضافة 4 أماكن عشوائية أخرى
+            while (locationOptions.length < 5) {
+                const randomLoc = locations[Math.floor(Math.random() * locations.length)];
+                if (!locationOptions.includes(randomLoc)) {
+                    locationOptions.push(randomLoc);
+                }
+            }
+            
+            // ترتيب عشوائي
+            locationOptions.sort(() => Math.random() - 0.5);
+            
+            // عرض خيارات الأماكن
+            locationOptions.forEach(location => {
+                const option = document.createElement('div');
+                option.className = 'vote-option';
+                option.innerHTML = '📍 ' + location;
+                option.onclick = () => selectLocationGuess(location, imposter);
+                optionsContainer.appendChild(option);
+            });
+            
+            document.getElementById('selectedVote').textContent = '';
+        }
+        
+        // اختيار تخمين المكان من الجاسوس
+        function selectLocationGuess(location, imposter) {
+            imposterGuess = location;
+            document.getElementById('selectedVote').innerHTML = 
+                '✅ تخمينك: <span style="color: #0ff">' + location + '</span><br>' +
+                '<span style="color:' + (location === specialLocation ? '#0f0' : '#f00') + '">' +
+                (location === specialLocation ? '🎯 صحيح!' : '❌ خطأ!') + '</span>';
+            
+            // إضافة زر للمتابعة للنتائج
+            const continueBtn = document.createElement('button');
+            continueBtn.textContent = '🏆 عرض النتائج';
+            continueBtn.onclick = calculateAndShowResults;
+            continueBtn.style.marginTop = '20px';
+            
+            const container = document.getElementById('voteOptions');
+            if (!container.querySelector('button')) {
+                container.appendChild(continueBtn);
+            }
+        }
+        
+        // حساب وعرض النتائج
+        function calculateAndShowResults() {
+            calculateResults();
+            showPage('page6');
+            displayResults();
+        }
+        
+        // حساب النتائج
+        function calculateResults() {
+            // حساب الأصوات
+            Object.values(voteSelections).forEach(votedPlayer => {
+                votes[votedPlayer] = (votes[votedPlayer] || 0) + 1;
+            });
+            
+            // حساب النقاط
+            players.forEach(player => {
+                // الجاسوس
+                if (player === players[imposterIndex]) {
+                    // إذا خمن الجاسوس المكان الصحيح
+                    if (imposterGuess === specialLocation) {
+                        scores[player] += 100;
+                    }
+                } 
+                // اللاعبون البرئاء
+                else {
+                    // إذا صوتوا على الجاسوس
+                    if (voteSelections[player] === players[imposterIndex]) {
+                        scores[player] += 100;
+                    }
+                }
+            });
+        }
+        
+        // عرض النتائج
+        function displayResults() {
+            const imposter = players[imposterIndex];
+            
+            // عرض الجاسوس
+            document.getElementById('imposterResult').innerHTML = 
+                '🎭 الجاسوس هو: <span class="imposter">' + imposter + '</span><br>' +
+                '<div style="font-size: 18px; color: #ff0; margin-top: 10px;">' +
+                '📍 المكان السري كان: ' + specialLocation + '<br>' +
+                '🎯 تخمين الجاسوس: ' + imposterGuess + ' ' +
+                (imposterGuess === specialLocation ? '✅' : '❌') +
+                '</div>';
+            
+            // عرض جدول النتائج
+            const resultsBody = document.getElementById('resultsBody');
+            resultsBody.innerHTML = '';
+            
+            players.forEach(player => {
+                const row = document.createElement('tr');
+                
+                const nameCell = document.createElement('td');
+                nameCell.innerHTML = '👤 ' + player;
+                if (player === imposter) {
+                    nameCell.innerHTML += ' <span class="status-badge imposter-badge">🎭 الجاسوس</span>';
+                } else {
+                    nameCell.innerHTML += ' <span class="status-badge innocent-badge">✅ بريء</span>';
+                }
+                
+                const scoreCell = document.createElement('td');
+                scoreCell.innerHTML = '<span style="font-size: 24px;">🏅 ' + scores[player] + '</span>';
+                
+                const detailsCell = document.createElement('td');
+                if (player === imposter) {
+                    detailsCell.innerHTML = 
+                        '🎭 الجاسوس<br>' +
+                        '📍 خمن: ' + imposterGuess + '<br>' +
+                        (imposterGuess === specialLocation ? 
+                         '✅ حصل على 100 نقطة' : 
+                         '❌ لم يحصل على نقاط');
+                } else {
+                    const votedFor = voteSelections[player];
+                    detailsCell.innerHTML = 
+                        '✅ بريء<br>' +
+                        '🗳️ صوت على: ' + votedFor + '<br>' +
+                        (votedFor === imposter ? 
+                         '✅ حصل على 100 نقطة' : 
+                         '❌ لم يحصل على نقاط');
+                }
+                
+                row.appendChild(nameCell);
+                row.appendChild(scoreCell);
+                row.appendChild(detailsCell);
+                resultsBody.appendChild(row);
+            });
+        }
+        
+        // إعادة تشغيل اللعبة
+        function restartGame() {
+            
+            updatePlayersList();
+            showPage('page1');
+            document.getElementById('startGameBtn').disabled = true;
+        }
+        
+        // تبديل الصفحات
+        function showPage(pageId) {
+            const pages = document.querySelectorAll('.page');
+            pages.forEach(page => {
+                page.classList.remove('active-page');
+            });
+            document.getElementById(pageId).classList.add('active-page');
+        }
+        // مسح جميع الأسماء
+function clearAllPlayers() {
+    if (confirm('هل تريد مسح جميع الأسماء؟')) {
+        players = [];
+        updatePlayersList();
+        document.getElementById('startGameBtn').disabled = true;
+        clearSavedPlayers(); // مسح من الذاكرة أيضاً
+    }
+}
+    </script>
+</body>
+</html>
